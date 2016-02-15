@@ -15,6 +15,7 @@ import org.mule.config.ConfigResource;
 import org.mule.config.builders.AbstractResourceConfigurationBuilder;
 import org.mule.config.i18n.MessageFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,36 +64,40 @@ public class SpringXmlConfigurationBuilder extends AbstractResourceConfiguration
         super(configResources);
     }
 
-    @Override
-    protected void doConfigure(MuleContext muleContext) throws Exception
+    protected List<ConfigResource> getConfigResources() throws IOException
     {
-        List<ConfigResource> allResources = new ArrayList<>();
-        if (useMinimalConfigResource)
+        List allResources = new ArrayList();
+        if (this.useMinimalConfigResource)
         {
-            allResources.add(new ConfigResource(MULE_DOMAIN_REGISTRY_BOOTSTRAP_SPRING_CONFIG));
-            allResources.add(new ConfigResource(MULE_MINIMAL_SPRING_CONFIG));
-            allResources.add(new ConfigResource(MULE_SPRING_CONFIG));
-            allResources.addAll(Arrays.asList(configResources));
+            allResources.add(new ConfigResource("registry-bootstrap-mule-domain-config.xml"));
+            allResources.add(new ConfigResource("minimal-mule-config.xml"));
+            allResources.add(new ConfigResource("mule-spring-config.xml"));
+            allResources.addAll(Arrays.asList(this.configResources));
         }
-        else if (useDefaultConfigResource)
+        else if (this.useDefaultConfigResource)
         {
-            allResources.add(new ConfigResource(MULE_REGISTRY_BOOTSTRAP_SPRING_CONFIG));
-            allResources.add(new ConfigResource(MULE_MINIMAL_SPRING_CONFIG));
-            allResources.add(new ConfigResource(MULE_SPRING_CONFIG));
-            allResources.add( new ConfigResource(MULE_DEFAULTS_CONFIG));
-            allResources.addAll(Arrays.asList(configResources));
+            allResources.add(new ConfigResource("registry-bootstrap-mule-config.xml"));
+            allResources.add(new ConfigResource("minimal-mule-config.xml"));
+            allResources.add(new ConfigResource("mule-spring-config.xml"));
+            allResources.add(new ConfigResource("default-mule-config.xml"));
+            allResources.addAll(Arrays.asList(this.configResources));
         }
         else
         {
-            allResources.add(new ConfigResource(MULE_SPRING_CONFIG));
-            allResources.addAll(Arrays.asList(configResources));
+            allResources.add(new ConfigResource("mule-spring-config.xml"));
+            allResources.addAll(Arrays.asList(this.configResources));
         }
+        return allResources;
+    }
 
+    protected void doConfigure(MuleContext muleContext)
+            throws Exception
+    {
+        List allResources = getConfigResources();
         addResources(allResources);
-
         ConfigResource[] configResourcesArray = new ConfigResource[allResources.size()];
-        applicationContext = createApplicationContext(muleContext, allResources.toArray(configResourcesArray));
-        createSpringRegistry(muleContext, applicationContext);
+        this.applicationContext = createApplicationContext(muleContext, (ConfigResource[])allResources.toArray(configResourcesArray));
+        createSpringRegistry(muleContext, this.applicationContext);
     }
 
     /**
